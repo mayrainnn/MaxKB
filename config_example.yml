@@ -1,11 +1,15 @@
 # 数据库链接信息
 DB_NAME: maxkb
-DB_HOST: localhost
+DB_HOST: 202.118.19.61
 DB_PORT: 5432
-DB_USER: root
-DB_PASSWORD: xxxxxxx
+DB_USER: postgres
+DB_PASSWORD: DBMS109
 DB_ENGINE: django.db.backends.postgresql_psycopg2
 
 DEBUG: false
 
 TIME_ZONE: Asia/Shanghai
+
+EMBEDDING_MODEL_PATH: /opt/maxkb/model/
+
+EMBEDDING_MODEL_NAME: /opt/maxkb/model/shibing624_text2vec-base-chinese

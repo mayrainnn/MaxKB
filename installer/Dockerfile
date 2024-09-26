@@ -65,7 +65,7 @@ RUN chmod 755 /opt/maxkb/app/installer/run-maxkb.sh && \
     chown sandbox:sandbox /opt/maxkb/app/sandbox
 
 
-EXPOSE 8080
+EXPOSE 8081
 
 ENTRYPOINT ["bash", "-c"]
 CMD [ "/usr/bin/run-maxkb.sh" ]
