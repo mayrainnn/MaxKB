@@ -23,50 +23,57 @@
             v-model="form[configType][key]"
             :type="isPasswordField(key) ? (passwordVisible[key] ? 'text' : 'password') : 'text'"
             :placeholder="item.placeholder"
+            :show-password="isPasswordField(key)"
           >
-            <template #suffix>
-              <el-icon
-                :class="['eye-icon', { 'is-active': passwordVisible[key] }]"
-                @click="togglePasswordVisibility(key)"
-              >
-                <i class="el-icon-view" v-if="passwordVisible[key]"></i>
-                <i class="el-icon-view-off" v-else></i>
-              </el-icon>
-            </template>
           </el-input>
         </el-form-item>
       </template>
+      <div v-if="configType === 'wechat'" class="flex align-center" style="margin-bottom: 8px">
+        <span class="el-form-item__label">认证通过</span>
+        <el-switch v-if="configType === 'wechat'" v-model="form[configType].is_certification" />
+      </div>
 
       <h4 class="title-decoration-1 mb-16">回调地址</h4>
       <el-form-item label="URL" prop="callback_url">
-        <el-input v-model="form[configType].callback_url" placeholder="请输入回调地址" />
-        <p class="instruction-text" v-if="configType === 'wechat'">
+        <el-input v-model="form[configType].callback_url" placeholder="请输入回调地址" readonly>
+          <template #append>
+            <el-button @click="copyClick(form[configType].callback_url)">
+              <AppIcon iconName="app-copy"></AppIcon>
+            </el-button>
+          </template>
+        </el-input>
+        <el-text type="info" v-if="configType === 'wechat'">
           复制链接填入到
           <a
+            class="primary"
             href="https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev"
             target="_blank"
             >微信公众平台</a
           >-设置与开发-基本配置-服务器配置的 "服务器地址URL" 中
-        </p>
-        <p class="instruction-text" v-if="configType === 'dingtalk'">
+        </el-text>
+        <el-text type="info" v-if="configType === 'dingtalk'">
           复制链接填入到
           <a
+            class="primary"
             href="https://open-dev.dingtalk.com/fe/app?hash=%23%2Fcorp%2Fapp#/corp/app"
             target="_blank"
             >钉钉开放平台</a
           >-机器人页面，设置 "消息接收模式" 为 HTTP模式 ，并把下面URL填写到"消息接收地址"中
-        </p>
-        <p class="instruction-text" v-if="configType === 'wecom'">
+        </el-text>
+        <el-text type="info" v-if="configType === 'wecom'">
           复制链接填入到
-          <a href="https://work.weixin.qq.com/wework_admin/frame#apps" target="_blank"
+          <a
+            class="primary"
+            href="https://work.weixin.qq.com/wework_admin/frame#apps"
+            target="_blank"
             >企业微信后台</a
           >-应用管理-自建-创建的应用-接受消息-设置 API 接收的 "URL" 中
-        </p>
-        <p class="instruction-text" v-if="configType === 'feishu'">
+        </el-text>
+        <el-text type="info" v-if="configType === 'feishu'">
           复制链接填入到
-          <a href="https://open.feishu.cn/app/" target="_blank">飞书开放平台</a
+          <a class="primary" href="https://open.feishu.cn/app/" target="_blank">飞书开放平台</a
           >-事件与回调-事件配置-配置订阅方式的 "请求地址" 中
-        </p>
+        </el-text>
       </el-form-item>
     </el-form>
 
@@ -85,6 +92,7 @@ import type { FormInstance } from 'element-plus'
 import applicationApi from '@/api/application'
 import { useRoute } from 'vue-router'
 import { MsgError, MsgSuccess } from '@/utils/message'
+import { copyClick } from '@/utils/clipboard'
 
 const formRef = ref<FormInstance>()
 const visible = ref(false)
@@ -97,8 +105,15 @@ const {
   params: { id }
 } = route as any
 
-const form = reactive({
-  wechat: { app_id: '', app_secret: '', token: '', encoding_aes_key: '', callback_url: '' },
+const form = reactive<any>({
+  wechat: {
+    app_id: '',
+    app_secret: '',
+    token: '',
+    encoding_aes_key: '',
+    is_certification: false,
+    callback_url: ''
+  },
   dingtalk: { client_id: '', client_secret: '', callback_url: '' },
   wecom: {
     app_id: '',
@@ -111,7 +126,7 @@ const form = reactive({
   feishu: { app_id: '', app_secret: '', verification_token: '', callback_url: '' }
 })
 
-const rules = reactive({
+const rules = reactive<{ [propName: string]: any }>({
   wechat: {
     app_id: [{ required: true, message: '请输入开发者ID', trigger: 'blur' }],
     app_secret: [{ required: true, message: '请输入开发者密码', trigger: 'blur' }],
@@ -136,7 +151,7 @@ const rules = reactive({
   }
 })
 
-const configFields = {
+const configFields: { [propName: string]: { [propName: string]: any } } = {
   wechat: {
     app_id: { label: '开发者ID (APP ID)', placeholder: '请输入开发者ID' },
     app_secret: { label: '开发者密码 (APP Secret)', placeholder: '请输入开发者密码' },
@@ -169,17 +184,17 @@ const drawerTitle = computed(
       wechat: '公众号配置',
       dingtalk: '钉钉应用配置',
       wecom: '企业微信应用配置',
-      feishu: '飞书配置'
+      feishu: '飞书应用配置'
     })[configType.value]
 )
 
 const infoTitle = computed(
   () =>
     ({
-      wechat: '微信公众号应用信息',
-      dingtalk: '钉钉应用信息',
-      wecom: '企业微信应用信息',
-      feishu: '飞书应用信息'
+      wechat: '应用信息',
+      dingtalk: '应用信息',
+      wecom: '应用信息',
+      feishu: '应用信息'
     })[configType.value]
 )
 
@@ -195,11 +210,7 @@ const passwordVisible = reactive<Record<string, boolean>>(
   )
 )
 
-const isPasswordField = (key: string) => passwordFields.has(key)
-
-const togglePasswordVisibility = (key: string) => {
-  passwordVisible[key] = !passwordVisible[key]
-}
+const isPasswordField = (key: any) => passwordFields.has(key)
 
 const closeDrawer = () => {
   visible.value = false
@@ -238,38 +249,11 @@ const open = async (id: string, type: 'wechat' | 'dingtalk' | 'wecom' | 'feishu'
     MsgError('加载配置失败，请检查输入或稍后再试')
   } finally {
     loading.value = false
-    // form[configType.value].callback_url = `${window.location.origin}/${type}/${id}`
+    form[configType.value].callback_url = `${window.location.origin}/api/${type}/${id}`
   }
 }
 
 defineExpose({ open })
 </script>
 
-<style lang="scss">
-.eye-icon {
-  cursor: pointer;
-  transition: color 0.3s;
-}
-
-.eye-icon.is-active {
-  color: #409eff;
-}
-
-.instruction-text {
-  font-family:
-    PingFang SC,
-    sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 22px;
-  text-align: left;
-}
-
-.instruction-text a {
-  color: #409eff;
-}
-
-.instruction-text a:hover {
-  color: #66b1ff;
-}
-</style>
+<style lang="scss"></style>
