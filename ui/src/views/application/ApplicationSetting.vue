@@ -239,7 +239,7 @@
                     >
                       <el-card class="relate-dataset-card border-r-4" shadow="never">
                         <div class="flex-between">
-                          <div class="flex align-center">
+                          <div class="flex align-center" style="width: 80%">
                             <AppAvatar
                               v-if="relatedObject(datasetList, item, 'id')?.type === '1'"
                               class="mr-8 avatar-purple"
@@ -252,9 +252,12 @@
                             <AppAvatar v-else class="mr-8 avatar-blue" shape="square" :size="32">
                               <img src="@/assets/icon_document.svg" style="width: 58%" alt="" />
                             </AppAvatar>
-                            <div class="ellipsis">
+                            <auto-tooltip
+                              :content="relatedObject(datasetList, item, 'id')?.name"
+                              style="width: 80%"
+                            >
                               {{ relatedObject(datasetList, item, 'id')?.name }}
-                            </div>
+                            </auto-tooltip>
                           </div>
                           <el-button text @click="removeDataset(item)">
                             <el-icon>
